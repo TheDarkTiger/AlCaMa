@@ -1,0 +1,2 @@
+It's mainly a personal project.
+Please do fork, but I can't garantee that I will accept pull request.

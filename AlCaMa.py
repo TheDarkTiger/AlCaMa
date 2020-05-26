@@ -26,8 +26,10 @@ def load_album_data( file=None ) :
 		},
 		"configuration":
 		{
-			"size":[320,320],
+			"size":[800,800],
+			"padding":16,
 			"style":"text",
+			"font-size":20,
 			"font-family":["Verdana", "sans-serif"],
 			"color":"#000",
 			"background-color":"#FFF"
@@ -45,25 +47,44 @@ def load_album_data( file=None ) :
 def picture_process( picture=None ) :
 	global album
 	
-	print( picture )
-	img = Image.new( "RGB", album["configuration"]["size"], color=(255,255,255) )
-	
-	draw = ImageDraw.Draw( img )
-	font = ImageFont.truetype( "tahoma.ttf", 12, encoding="unic" )
-	
-	text = picture["data"]["caption"]
-	draw.text( (0,0), text, font=font, fill=(0,0,0) )
-	
-	filename = album["name"]+"_"+os.path.split(picture["file"])[1]
-	print( filename )
-	img.save( filename )
+	if picture != None :
+		print( picture )
+		
+		size = album["configuration"]["size"]
+		padding = album["configuration"]["padding"]
+		
+		im = Image.open( picture["file"] )
+		if im.size[0] > im.size[1] :
+			u = 1
+			v = im.size[1] / im.size[0]
+		else :
+			u = im.size[0] / im.size[1]
+			v = 1
+		
+		w = int((size[0]*u)-(2*padding))
+		h = int((size[1]*v)-(2*padding))
+		
+		print( f"{u} {v}, {w} {h}" )
+		
+		img = Image.new( "RGB", size, color=(255,255,255) )
+		img.paste( im.resize( (w, h) ), (padding,padding) )
+		
+		draw = ImageDraw.Draw( img )
+		font = ImageFont.truetype( "tahoma.ttf", album["configuration"]["font-size"], encoding="unic" )
+		
+		text = picture["data"]["caption"]
+		draw.text( (padding, h+(2*padding)), text, font=font, fill=(0,0,0) )
+		
+		filename = album["name"]+"_"+os.path.split(picture["file"])[1]
+		print( filename )
+		img.save( filename )
 	
 
 
 #===============================================================================
 # Main
 
-print( "plop" )
+print( "AlCaMa" )
 print( album )
 
 file = os.path.abspath( file )

@@ -42,6 +42,7 @@ def load_album_data( file=None ) :
 			data = json.load( rf )
 			
 		print( data )
+	album = data
 	
 
 def picture_process( picture=None ) :
@@ -54,6 +55,11 @@ def picture_process( picture=None ) :
 		padding = album["configuration"]["padding"]
 		
 		im = Image.open( picture["file"] )
+		x = padding
+		y = padding
+		sw = size[0] -(2*padding)
+		sh = size[1] -(2*padding)
+		
 		if im.size[0] > im.size[1] :
 			u = 1
 			v = im.size[1] / im.size[0]
@@ -61,13 +67,17 @@ def picture_process( picture=None ) :
 			u = im.size[0] / im.size[1]
 			v = 1
 		
-		w = int((size[0]*u)-(2*padding))
-		h = int((size[1]*v)-(2*padding))
+		w = int((sw*u))
+		h = int((sh*v))
+		
+		size[1] += 2*int( album["configuration"]["font-size"] )
+		
+		
 		
 		print( f"{u} {v}, {w} {h}" )
 		
-		img = Image.new( "RGB", size, color=(255,255,255) )
-		img.paste( im.resize( (w, h) ), (padding,padding) )
+		img = Image.new( "RGB", size, color=(250,250,250) )
+		img.paste( im.resize( (w,h) ), (x,y) )
 		
 		draw = ImageDraw.Draw( img )
 		font = ImageFont.truetype( "tahoma.ttf", album["configuration"]["font-size"], encoding="unic" )

@@ -1,0 +1,14 @@
+
+
+
+= General =
+Cleaner code
+Add command line
+
+= Album =
+Set default parameters if missing for the album in album_load_data()
+
+= Images =
+Nicer render of the images
+Multi line
+Test UTF-8

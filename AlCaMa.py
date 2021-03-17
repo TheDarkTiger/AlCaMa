@@ -1,21 +1,17 @@
 #! coding: utf-8
 #! python3
-# Guillaume Viravau 2020
-# A small cript to generate caption and/or albums from simple json file
-
+# Guillaume Viravau 2020-2021
+# A small script to generate caption and/or albums from json file
 
 import os
 import json
 from PIL import Image, ImageDraw, ImageFont
 
-file = r"test\album.json"
-album = None
 
-def load_album_data( file=None ) :
-	global album
+def album_load_data( file=None ) :
 	
 	# Default values
-	album = {
+	data = {
 		"name":"Hollidays",
 		"pictures":
 		{
@@ -41,8 +37,17 @@ def load_album_data( file=None ) :
 		with open( file, "r" ) as rf :
 			data = json.load( rf )
 			
-		print( data )
-	album = data
+		
+	
+	return data
+
+
+def album_generate( album=None):
+	index = 0
+	for picture in album["pictures"] :
+		print( picture+" :" )
+		picture_process( {"file":os.path.join(albumFolder, picture), "index":index, "data":album["pictures"][picture]} )
+		index += 1
 	
 
 def picture_process( picture=None ) :
@@ -94,20 +99,16 @@ def picture_process( picture=None ) :
 #===============================================================================
 # Main
 
-print( "AlCaMa" )
-print( album )
-
-file = os.path.abspath( file )
-albumFolder = os.path.dirname( file )
-print( albumFolder )
-load_album_data( file )
-
-
-index = 0
-for picture in album["pictures"] :
-	print( picture+" :" )
-	picture_process( {"file":os.path.join(albumFolder, picture), "index":index, "data":album["pictures"][picture]} )
-	index += 1
+if __name__ == "__main__" :
+	print( "AlCaMa" )
 	
-
+	file = r"test\album.json"
+	file = os.path.abspath( file )
+	
+	albumFolder = os.path.dirname( file )
+	print( albumFolder )
+	album = album_load_data( file )
+	
+	album_generate( album )
+	
 

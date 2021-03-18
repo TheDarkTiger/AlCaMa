@@ -72,7 +72,7 @@ def album_load_data( file=None ) :
 	return data
 
 
-def album_generate( album=None):
+def album_generate( album=None ):
 	index = 0
 	for picture in album["pictures"] :
 		print( picture+" :" )
@@ -86,39 +86,133 @@ def picture_process( picture=None ) :
 	if picture != None :
 		print( picture )
 		
-		size = album["configuration"]["size"]
-		padding = album["configuration"]["padding"]
-		
-		im = Image.open( picture["file"] )
-		x = padding
-		y = padding
-		sw = size[0] -(2*padding)
-		sh = size[1] -(2*padding)
-		
-		if im.size[0] > im.size[1] :
-			u = 1
-			v = im.size[1] / im.size[0]
+		# Style Polaroid
+		if  album["configuration"]["style"] == "polaroid" :
+			# Polaroid
+			# Full   : 164*200 -> h   = w * 1.22
+			# Pading : 10      -> pad = w * 0.06
+			# Image  : 144*147 -> hp  = wp * 1.02
+			# Text   : 144*23
+			# coords={}
+			# coords["image"] = (0,0, 164,200)
+			# coords["picture"] = (10,10, 10+144,10+147)
+			# coords["text"] = (10,167, 10+144,167+23)
+			
+			size = album["configuration"]["size"]
+			padding = album["configuration"]["padding"]
+			
+			W = size[0]
+			H = int(W * 1.22)
+			pad = int(W * 0.06)
+			
+			# start, stop
+			coords={}
+			coords["image"] = (0,0, W,H)
+			coords["picture"] = (pad,pad, W-pad,pad+int(W*0.89))
+			coords["text"] = (pad,(2*pad)+int(W*0.89), W-pad,H-pad)
+			
+			img = Image.new( "RGB", coords["image"][2:4], color=colorOf(album["configuration"]["background-color"]) )
+			draw = ImageDraw.Draw( img )
+			
+			# Picture
+			draw.rectangle( coords["picture"], fill=(200,200,200), outline=None )
+			
+			# Get image and infos
+			im = Image.open( picture["file"] )
+			ratio = "landscape"
+			
+			pictureStyle = "contain"
+			if "picture-style" in album["configuration"] : pictureStyle = album["configuration"]["picture-style"]
+			
+			# contain : Aspect ration is kept, whole image is visible, even if showing background
+			if pictureStyle == "contain" :
+				x,y = coords["picture"][0:2]
+				sw,sh = coords["picture"][2:4]
+				sw -= x
+				sh -= y
+				
+				if im.size[0] > im.size[1] :
+					ratio = "horizontal"
+					u = 1
+					v = im.size[1] / im.size[0]
+				else :
+					ratio = "vertical"
+					u = im.size[0] / im.size[1]
+					v = 1
+				
+				w = int((sw*u))
+				h = int((sh*v))
+				
+			# cover   : Aspect ration is kept, no more background is visible, even if part of the image is hidden
+			elif pictureStyle == "cover" :
+				x,y = coords["picture"][0:2]
+				sw,sh = coords["picture"][2:4]
+				sw -= x
+				sh -= y
+				
+				if im.size[0] > im.size[1] :
+					ratio = "vertical"
+					u = im.size[0] / im.size[1]
+					v = 1
+				else :
+					ratio = "horizontal"
+					u = 1
+					v = im.size[1] / im.size[0]
+				
+				w = int((sw*u))
+				h = int((sh*v))
+				
+			# stretch : The image takes all the space, even if distorded
+			else:
+				x,y = coords["picture"][0:2]
+				sw,sh = coords["picture"][2:4]
+				w = sw-x
+				h = sh-y
+			
+			# top middle bottom
+			# left center right
+			align = "center"
+			if "picture-align" in album["configuration"] : align = album["configuration"]["picture-align"]
+			print(align + " " + ratio)
+			
+			if ratio == "horizontal" :
+				# top middle bottom
+				if align == "middle" :
+					y = coords["picture"][1]+int((sh-(sh*v))/2)
+				elif align == "bottom" :
+					y = coords["picture"][3]-int(sh*v)
+				else :
+					y = coords["picture"][1]
+			else :
+				# left center right
+				if align == "center" :
+					x = coords["picture"][0]+int((sw-(sw*u))/2)
+				elif align == "right" :
+					x = coords["picture"][2]-int(sw*u)
+				else :
+					x = coords["picture"][0]
+			
+			print( f"{x} {y}, {w} {h}" )
+			
+			# TODO : .crop((x,y, x+w, y+h))
+			img.paste( im.resize( (w,h) ), (x,y) )
+			
+			# Text
+			draw.rectangle( coords["text"], fill=(200,200,200), outline=None )
+			font = ImageFont.truetype( "tahoma.ttf", album["configuration"]["font-size"], encoding="unic" )
+			
+			text = picture["data"]["caption"]
+			draw.text( coords["text"][0:2], text, font=font, fill=colorOf(album["configuration"]["color"]) )
+			
+		# Default is text
 		else :
-			u = im.size[0] / im.size[1]
-			v = 1
-		
-		w = int((sw*u))
-		h = int((sh*v))
-		
-		size[1] += 2*int( album["configuration"]["font-size"] )
-		
-		
-		
-		print( f"{u} {v}, {w} {h}" )
-		
-		img = Image.new( "RGB", size, color=(250,250,250) )
-		img.paste( im.resize( (w,h) ), (x,y) )
-		
-		draw = ImageDraw.Draw( img )
-		font = ImageFont.truetype( "tahoma.ttf", album["configuration"]["font-size"], encoding="unic" )
-		
-		text = picture["data"]["caption"]
-		draw.text( (padding, h+(2*padding)), text, font=font, fill=(0,0,0) )
+			print("No style found. Using 'text'")
+			img = Image.open( picture["file"] )
+			draw = ImageDraw.Draw( img )
+			font = ImageFont.truetype( "tahoma.ttf", album["configuration"]["font-size"], encoding="unic" )
+			text = picture["data"]["caption"]
+			draw.text( (0,0), text, font=font, fill=colorOf(album["configuration"]["color"]) )
+			
 		
 		filename = album["name"]+"_"+os.path.split(picture["file"])[1]
 		print( filename )

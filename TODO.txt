@@ -9,6 +9,8 @@ Add command line
 Set default parameters if missing for the album in album_load_data()
 
 = Images =
-Nicer render of the images
+Nicerer render of the images
+Crop -> rewrite the drawing engine TT__TT
+Mutualize the align options (top-left, center, bottom-right)
 Multi line
 Test UTF-8

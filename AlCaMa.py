@@ -8,6 +8,36 @@ import json
 from PIL import Image, ImageDraw, ImageFont
 
 
+def colorOf( string=None ) :
+	"""Convert a color from a string to an RGB"""
+	color = (0,0,0)
+	if string is not None :
+		
+		# '#' familly
+		if string[0] == '#':
+			# Format : "#17B"
+			if len(string) == 4:
+				# Convert "#17B" to "#1177BB"
+				string = "#"+(string[1]*2)+(string[2]*2)+(string[3]*2)
+			
+			# Format : "#1278BC"
+			if len(string) == 7:
+				color = ( int(string[1:3], 16), int(string[3:5], 16), int(string[5:7], 16) )
+			
+		
+		# 'rgb()' familly
+		if string.startswith("rgb("):
+			if (string[-1] == ")") and (string.count(",") == 2) :
+				# Is it 'Pythonic' enought for you now?
+				r,g,b = [int(a.strip()) for a in string[4:-1].split(",")]
+				color = (r, g, b)
+			else :
+				print( "Malformed color : "+string )
+		
+		# 'hsl()' familly
+	
+	return color
+
 def album_load_data( file=None ) :
 	
 	# Default values

@@ -5,6 +5,7 @@
 
 import os
 import json
+import copy
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -40,28 +41,6 @@ def colorOf( string=None ) :
 
 def album_load_data( file=None ) :
 	
-	# Default values
-	data = {
-		"name":"Hollidays",
-		"pictures":
-		{
-			"scotland.jpg":{"caption":"Shigiddy whoo!"},
-			"japan.jpg":{"caption":"Zen"},
-			"london.jpg":{"caption":"Fish and chips!"},
-			"paris.jpg":{"caption":"Loveliest town in the world."}
-		},
-		"configuration":
-		{
-			"size":[800,800],
-			"padding":16,
-			"style":"text",
-			"font-size":20,
-			"font-family":["Verdana", "sans-serif"],
-			"color":"#000",
-			"background-color":"#FFF"
-		}
-	}
-	
 	# Reading the file
 	if file is not None :
 		with open( file, "r" ) as rf :
@@ -69,25 +48,62 @@ def album_load_data( file=None ) :
 			
 		
 	
+	# Default values
+	if "name" not in data :
+		data["name"] = "Unnamed"
+	
+	default = {
+			"file-format":"webp",
+			"size":[800,800],
+			"padding":16,
+			"style":"polaroid",
+			"picture-style":"contain",
+			"picture-align":"center",
+			"font-size":20,
+			"font-family":["Verdana", "sans-serif"],
+			"color":"#111",
+			"background-color":"#FAFAFA"
+		}
+	if "configuration" not in data :
+		data["configuration"] = copy.deepcopy( default )
+	else :
+		for parameter in default :
+			if parameter not in data["configuration"] :
+				data["configuration"][parameter] = default[parameter]
+				print("added "+parameter)
+	
 	return data
 
 
 def album_generate( album=None ):
 	index = 0
 	for picture in album["pictures"] :
-		print( picture+" :" )
-		picture_process( {"file":os.path.join(albumFolder, picture), "index":index, "data":album["pictures"][picture]} )
+		print( picture+" : ", end="" )
+		
+		picturePath = os.path.join(albumFolder, picture)
+		configuration = {}
+		configuration = copy.deepcopy( album["configuration"] )
+		configuration["album-name"] = album["name"]
+		configuration["index"] = index
+		configuration["file"] = picturePath
+		
+		for parameter in album["pictures"][picture] :
+			configuration[parameter] = album["pictures"][picture][parameter]
+		
+		if os.path.exists(picturePath) :
+			picture_process( configuration )
+		else :
+			print("File not found")
 		index += 1
 	
 
 def picture_process( picture=None ) :
-	global album
 	
 	if picture != None :
 		print( picture )
 		
 		# Style Polaroid
-		if  album["configuration"]["style"] == "polaroid" :
+		if  picture["style"] == "polaroid" :
 			# Polaroid
 			# Full   : 164*200 -> h   = w * 1.22
 			# Pading : 10      -> pad = w * 0.06
@@ -98,8 +114,8 @@ def picture_process( picture=None ) :
 			# coords["picture"] = (10,10, 10+144,10+147)
 			# coords["text"] = (10,167, 10+144,167+23)
 			
-			size = album["configuration"]["size"]
-			padding = album["configuration"]["padding"]
+			size = picture["size"]
+			padding = picture["padding"]
 			
 			W = size[0]
 			H = int(W * 1.22)
@@ -111,7 +127,7 @@ def picture_process( picture=None ) :
 			coords["picture"] = (pad,pad, W-pad,pad+int(W*0.89))
 			coords["text"] = (pad,(2*pad)+int(W*0.89), W-pad,H-pad)
 			
-			img = Image.new( "RGB", coords["image"][2:4], color=colorOf(album["configuration"]["background-color"]) )
+			img = Image.new( "RGB", coords["image"][2:4], color=colorOf(picture["background-color"]) )
 			draw = ImageDraw.Draw( img )
 			
 			# Picture
@@ -122,7 +138,7 @@ def picture_process( picture=None ) :
 			ratio = "landscape"
 			
 			pictureStyle = "contain"
-			if "picture-style" in album["configuration"] : pictureStyle = album["configuration"]["picture-style"]
+			if "picture-style" in picture : pictureStyle = picture["picture-style"]
 			
 			# contain : Aspect ration is kept, whole image is visible, even if showing background
 			if pictureStyle == "contain" :
@@ -172,7 +188,7 @@ def picture_process( picture=None ) :
 			# top middle bottom
 			# left center right
 			align = "center"
-			if "picture-align" in album["configuration"] : align = album["configuration"]["picture-align"]
+			if "picture-align" in picture : align = picture["picture-align"]
 			print(align + " " + ratio)
 			
 			if ratio == "horizontal" :
@@ -199,22 +215,22 @@ def picture_process( picture=None ) :
 			
 			# Text
 			draw.rectangle( coords["text"], fill=(200,200,200), outline=None )
-			font = ImageFont.truetype( "tahoma.ttf", album["configuration"]["font-size"], encoding="unic" )
+			font = ImageFont.truetype( "tahoma.ttf", picture["font-size"], encoding="unic" )
 			
-			text = picture["data"]["caption"]
-			draw.text( coords["text"][0:2], text, font=font, fill=colorOf(album["configuration"]["color"]) )
+			text = picture["caption"]
+			draw.text( coords["text"][0:2], text, font=font, fill=colorOf(picture["color"]) )
 			
 		# Default is text
 		else :
 			print("No style found. Using 'text'")
 			img = Image.open( picture["file"] )
 			draw = ImageDraw.Draw( img )
-			font = ImageFont.truetype( "tahoma.ttf", album["configuration"]["font-size"], encoding="unic" )
-			text = picture["data"]["caption"]
-			draw.text( (0,0), text, font=font, fill=colorOf(album["configuration"]["color"]) )
+			font = ImageFont.truetype( "tahoma.ttf", picture["font-size"], encoding="unic" )
+			text = picture["caption"]
+			draw.text( (0,0), text, font=font, fill=colorOf(picture["color"]) )
 			
 		
-		filename = album["name"]+"_"+os.path.split(picture["file"])[1]
+		filename = picture["album-name"]+"_"+str(picture["index"])+"."+picture["file-format"]
 		print( filename )
 		img.save( filename )
 	

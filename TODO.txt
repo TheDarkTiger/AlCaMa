@@ -6,7 +6,7 @@ Cleaner code
 Add command line
 
 = Album =
-Set default parameters if missing for the album in album_load_data()
+~None for now~
 
 = Images =
 Nicerer render of the images

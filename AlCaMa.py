@@ -7,7 +7,23 @@
 import os
 import json
 import copy
+import argparse
 from PIL import Image, ImageDraw, ImageFont
+
+
+def parse_arguments():
+	"""
+	Parses the arguments
+	"""
+	
+	parser = argparse.ArgumentParser( description="Creates album from JSON" )
+	
+	parser.add_argument( '-i', "--json", action="store", dest="input_json", help="Json to read", default=None )
+	
+	parser.add_argument( '-o', '--output-folder', action="store", dest="output_folder", help="Folder to save album to", default=None )
+	parser.add_argument( '-v', '--verbose', action="store_true", dest="verbose", help="Verbose output", default=False )
+	
+	return parser.parse_args()
 
 
 def colorOf( string=None ) :
@@ -241,15 +257,31 @@ def picture_process( picture=None ) :
 # Main
 
 if __name__ == "__main__" :
+	arguments = parse_arguments()
 	print( "AlCaMa" )
+	print( arguments )
 	
-	file = r"test\album.json"
-	file = os.path.abspath( file )
-	
-	albumFolder = os.path.dirname( file )
-	print( albumFolder )
-	album = album_load_data( file )
-	
-	album_generate( album )
+	if arguments.input_json != None :
+		file = arguments.input_json
+		if os.path.exists( file ) :
+			if os.path.isfile( file ) :
+				file = r"test\album.json"
+				file = os.path.abspath( file )
+				
+				albumFolder = os.path.dirname( file )
+				print( albumFolder )
+				album = album_load_data( file )
+				
+				album_generate( album )
+			else:
+				print( f"{file} is not a file" )
+				
+		else:
+			print( f"{file} does not exists" )
+			
+		
+	else:
+		print( "No input file given" )
+		
 	
 

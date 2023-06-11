@@ -13,7 +13,7 @@
 		"padding":16,
 		"style":"polaroid",
 		"picture-style":"contain",
-		"picture-align":"middle",
+		"picture-align":"center",
 		"font-size":20,
 		"font-family":["Verdana", "sans-serif"],
 		"color":"rgb(10,10,10)",

@@ -11,6 +11,5 @@ Add command line
 = Images =
 Nicerer render of the images
 Crop -> rewrite the drawing engine TT__TT
-Mutualize the align options (top-left, center, bottom-right)
 Multi line
 Test UTF-8

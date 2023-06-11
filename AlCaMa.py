@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #! coding: utf-8
 #! python3
-# Guillaume Viravau 2020-2021
+# Guillaume Viravau 2020-2023
 # A small script to generate caption and/or albums from json file
 
 import os
@@ -210,9 +210,9 @@ def picture_process( picture=None ) :
 			
 			if ratio == "horizontal" :
 				# top middle bottom
-				if align == "middle" :
+				if align == "center" :
 					y = coords["picture"][1]+int((sh-(sh*v))/2)
-				elif align == "bottom" :
+				elif align == "bottom-right" :
 					y = coords["picture"][3]-int(sh*v)
 				else :
 					y = coords["picture"][1]
@@ -220,7 +220,7 @@ def picture_process( picture=None ) :
 				# left center right
 				if align == "center" :
 					x = coords["picture"][0]+int((sw-(sw*u))/2)
-				elif align == "right" :
+				elif align == "bottom-right" :
 					x = coords["picture"][2]-int(sw*u)
 				else :
 					x = coords["picture"][0]
@@ -265,7 +265,6 @@ if __name__ == "__main__" :
 		file = arguments.input_json
 		if os.path.exists( file ) :
 			if os.path.isfile( file ) :
-				file = r"test\album.json"
 				file = os.path.abspath( file )
 				
 				albumFolder = os.path.dirname( file )

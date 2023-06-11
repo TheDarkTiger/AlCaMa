@@ -11,5 +11,4 @@ Add command line
 = Images =
 Nicerer render of the images
 Crop -> rewrite the drawing engine TT__TT
-Multi line
 Test UTF-8

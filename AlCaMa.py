@@ -26,6 +26,26 @@ def parse_arguments():
 	return parser.parse_args()
 
 
+# make the text multilines to fit any given width with a given font
+def text_multilines( text="", pixelWidth=80, font=None ):
+	
+	text = text.split( " " )
+	finalText = ""
+	line = ""
+	
+	for word in text :
+		
+		if( font.getsize( f"{line}{word}" )[0] > pixelWidth ):
+			finalText += line+"\n"
+			line = f"{word} "
+		else:
+			line = f"{line}{word} "
+		
+	finalText += line+"\n"
+	
+	return finalText
+
+
 def colorOf( string=None ) :
 	"""Convert a color from a string to an RGB"""
 	color = (0,0,0)
@@ -76,7 +96,9 @@ def album_load_data( file=None ) :
 			"style":"polaroid",
 			"picture-style":"contain",
 			"picture-align":"center",
+			"picture-background-color":"#111",
 			"font-size":20,
+			"font-name":"tahoma.ttf",
 			"font-family":["Verdana", "sans-serif"],
 			"color":"#111",
 			"background-color":"#FAFAFA"
@@ -117,7 +139,6 @@ def album_generate( album=None ):
 def picture_process( picture=None ) :
 	
 	if picture != None :
-		print( picture )
 		
 		# Style Polaroid
 		if  picture["style"] == "polaroid" :
@@ -148,7 +169,7 @@ def picture_process( picture=None ) :
 			draw = ImageDraw.Draw( img )
 			
 			# Picture
-			draw.rectangle( coords["picture"], fill=(200,200,200), outline=None )
+			draw.rectangle( coords["picture"], fill=colorOf(picture["picture-background-color"]), outline=None )
 			
 			# Get image and infos
 			im = Image.open( picture["file"] )
@@ -157,7 +178,7 @@ def picture_process( picture=None ) :
 			pictureStyle = "contain"
 			if "picture-style" in picture : pictureStyle = picture["picture-style"]
 			
-			# contain : Aspect ration is kept, whole image is visible, even if showing background
+			# contain : Aspect ratio is kept, whole image is visible, even if showing background
 			if pictureStyle == "contain" :
 				x,y = coords["picture"][0:2]
 				sw,sh = coords["picture"][2:4]
@@ -176,7 +197,7 @@ def picture_process( picture=None ) :
 				w = int((sw*u))
 				h = int((sh*v))
 				
-			# cover   : Aspect ration is kept, no more background is visible, even if part of the image is hidden
+			# cover   : Aspect ratio is kept, no more background is visible, even if part of the image is cut
 			elif pictureStyle == "cover" :
 				x,y = coords["picture"][0:2]
 				sw,sh = coords["picture"][2:4]
@@ -225,17 +246,25 @@ def picture_process( picture=None ) :
 				else :
 					x = coords["picture"][0]
 			
-			print( f"{x} {y}, {w} {h}" )
 			
 			# TODO : .crop((x,y, x+w, y+h))
 			img.paste( im.resize( (w,h) ), (x,y) )
 			
+			#----------
 			# Text
-			draw.rectangle( coords["text"], fill=(200,200,200), outline=None )
-			font = ImageFont.truetype( "tahoma.ttf", picture["font-size"], encoding="unic" )
 			
-			text = picture["caption"]
-			draw.text( coords["text"][0:2], text, font=font, fill=colorOf(picture["color"]) )
+			#draw.rectangle( coords["text"], fill=(200,200,200), outline=None )
+			
+			# Load font
+			try :
+				font = ImageFont.truetype( picture["font-name"], picture["font-size"], encoding="unic" )
+			except :
+				print( f"Font {picture['font-name']} not found. Using built-in one" )
+				font = ImageFont.load_default()
+			
+			# Prepare and draw text
+			text = text_multilines( picture["caption"], pixelWidth=(coords["text"][2]-coords["text"][0]), font=font )
+			draw.multiline_text( coords["text"][0:2], text, font=font, fill=colorOf(picture["color"]) )
 			
 		# Default is text
 		else :
@@ -247,7 +276,8 @@ def picture_process( picture=None ) :
 			draw.text( (0,0), text, font=font, fill=colorOf(picture["color"]) )
 			
 		
-		filename = picture["album-name"]+"_"+str(picture["index"])+"."+picture["file-format"]
+		# Save the image
+		filename = f'{picture["album-name"]} ({picture["index"]+1}).{picture["file-format"]}'
 		print( filename )
 		img.save( filename )
 	

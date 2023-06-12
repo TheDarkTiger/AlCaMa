@@ -35,7 +35,7 @@ def text_multilines( text="", pixelWidth=80, font=None ):
 	
 	for word in text :
 		
-		if( font.getsize( f"{line}{word}" )[0] > pixelWidth ):
+		if( font.getlength( f"{line}{word}" ) > pixelWidth ):
 			finalText += line+"\n"
 			line = f"{word} "
 		else:
@@ -165,7 +165,7 @@ def picture_process( picture=None ) :
 			coords["picture"] = (pad,pad, W-pad,pad+int(W*0.89))
 			coords["text"] = (pad,(2*pad)+int(W*0.89), W-pad,H-pad)
 			
-			img = Image.new( "RGB", coords["image"][2:4], color=colorOf(picture["background-color"]) )
+			img = Image.new( "RGBA", coords["image"][2:4], color=colorOf(picture["background-color"]) )
 			draw = ImageDraw.Draw( img )
 			
 			# Picture
@@ -269,17 +269,29 @@ def picture_process( picture=None ) :
 		# Default is text
 		else :
 			print("No style found. Using 'text'")
-			img = Image.open( picture["file"] )
+			img = Image.open( "RGBA", picture["file"] )
 			draw = ImageDraw.Draw( img )
-			font = ImageFont.truetype( "tahoma.ttf", picture["font-size"], encoding="unic" )
+			font = ImageFont.load_default()
 			text = picture["caption"]
 			draw.text( (0,0), text, font=font, fill=colorOf(picture["color"]) )
 			
 		
+		# Optional watermark
+		watermark = "Made with AlCaMa"
+		
+		if( watermark != None ):
+			watermarkBitmap = Image.new( "RGBA", img.size, (0,0,0,0) )
+			watermarkBitmapDraw = ImageDraw.Draw( watermarkBitmap )
+			font = ImageFont.load_default()
+			# TODO when Pillow will fix anchoring fr default font
+			# watermarkBitmapDraw.text( img.size, watermark, font=font, anchor="rd", fill=(0,0,0,48) )
+			watermarkBitmapDraw.text( (img.size[0]+20-len(watermark)*8, img.size[1]-16), watermark, font=font, fill=(0,0,0,32) )
+			img = Image.alpha_composite( img, watermarkBitmap )
+		
 		# Save the image
 		filename = f'{picture["album-name"]} ({picture["index"]+1}).{picture["file-format"]}'
 		print( filename )
-		img.save( filename )
+		img.convert("RGB").save( filename )
 	
 
 

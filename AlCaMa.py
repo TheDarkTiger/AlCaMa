@@ -114,7 +114,7 @@ def album_load_data( file=None ) :
 	return data
 
 
-def album_generate( album=None ):
+def album_generate( album=None, path=None ):
 	index = 0
 	for picture in album["pictures"] :
 		print( picture+" : ", end="" )
@@ -123,11 +123,15 @@ def album_generate( album=None ):
 		configuration = {}
 		configuration = copy.deepcopy( album["configuration"] )
 		configuration["album-name"] = album["name"]
+		configuration["album-path"] = path if path != None else album["name"]
 		configuration["index"] = index
 		configuration["file"] = picturePath
 		
 		for parameter in album["pictures"][picture] :
 			configuration[parameter] = album["pictures"][picture][parameter]
+		
+		if not os.path.exists( configuration["album-path"] ) :
+			os.makedirs( configuration["album-path"] )
 		
 		if os.path.exists(picturePath) :
 			picture_process( configuration )
@@ -289,7 +293,7 @@ def picture_process( picture=None ) :
 			img = Image.alpha_composite( img, watermarkBitmap )
 		
 		# Save the image
-		filename = f'{picture["album-name"]} ({picture["index"]+1}).{picture["file-format"]}'
+		filename = os.path.join( picture["album-path"], f'{picture["album-name"]} ({picture["index"]+1}).{picture["file-format"]}' )
 		print( filename )
 		img.convert("RGB").save( filename )
 	
@@ -313,7 +317,7 @@ if __name__ == "__main__" :
 				print( albumFolder )
 				album = album_load_data( file )
 				
-				album_generate( album )
+				album_generate( album, path=arguments.output_folder )
 			else:
 				print( f"{file} is not a file" )
 				
